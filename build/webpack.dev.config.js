@@ -2,12 +2,15 @@ var path = require('path')
 var webpack = require('webpack')
 
 module.exports = {
-  entry: './src/index',
+  entry: './practice/index',
+    // vue: './src/index',
+    // practice: './practice/index'
   output: {
     path: path.resolve(__dirname, '../dist'),
-    filename: 'vue.js',
-    library: 'Vue',
-    libraryTarget: 'umd'
+    filename: 'practice.js'
+    // filename: 'vue.js',
+    // library: 'Vue',
+    // libraryTarget: 'umd'
   },
   module: {
     loaders: [
