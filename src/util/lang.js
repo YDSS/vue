@@ -221,6 +221,7 @@ export function classify (str) {
  * @return {Function}
  */
 
+// QA 为什么说比原生的bind方法快？
 export function bind (fn, ctx) {
   return function (a) {
     var l = arguments.length
@@ -360,6 +361,7 @@ export function debounce (func, wait) {
  * @param {*} obj
  */
 
+// QA 为什么比native快
 export function indexOf (arr, obj) {
   var i = arr.length
   while (i--) {
