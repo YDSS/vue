@@ -34,6 +34,7 @@ let uid = 0
  */
 
 export default function Watcher (vm, expOrFn, cb, options) {
+    debugger
   // mix in options
   if (options) {
     extend(this, options)

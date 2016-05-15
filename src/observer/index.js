@@ -45,6 +45,8 @@ export function Observer (value) {
     var augment = hasProto
       ? protoAugment
       : copyAugment
+    // replace original array methods with those are intercepted
+    // from ./array.js
     augment(value, arrayMethods, arrayKeys)
     this.observeArray(value)
   } else {
@@ -164,6 +166,7 @@ export function observe (value, vm) {
     return
   }
   var ob
+  // if observer exist
   if (
     hasOwn(value, '__ob__') &&
     value.__ob__ instanceof Observer
@@ -192,6 +195,7 @@ export function observe (value, vm) {
  */
 
 export function defineReactive (obj, key, val) {
+  // QA what job does this dep have?
   var dep = new Dep()
 
   var property = Object.getOwnPropertyDescriptor(obj, key)
@@ -208,6 +212,7 @@ export function defineReactive (obj, key, val) {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
+        debugger
       var value = getter ? getter.call(obj) : val
       if (Dep.target) {
         dep.depend()
@@ -224,6 +229,7 @@ export function defineReactive (obj, key, val) {
       return value
     },
     set: function reactiveSetter (newVal) {
+        debugger
       var value = getter ? getter.call(obj) : val
       if (newVal === value) {
         return

@@ -52,7 +52,22 @@
 	
 	var _srcIndex2 = _interopRequireDefault(_srcIndex);
 	
-	console.log(_srcIndex2['default'].version);
+	var vm = new _srcIndex2['default']({
+	    el: '#container',
+	    data: {
+	        text: 'Hello World',
+	        arr: [1, 2, 3],
+	        objArr: [{
+	            name: '1'
+	        }, {
+	            name: '2'
+	        }, {
+	            name: '3'
+	        }]
+	    }
+	});
+	
+	window.vm = vm;
 
 /***/ },
 /* 1 */
@@ -80,7 +95,7 @@
 	
 	_globalApi2['default'](_instanceVue2['default']);
 	
-	_instanceVue2['default'].version = '1.0.21';
+	_instanceVue2['default'].version = '1.0.22';
 	
 	exports['default'] = _instanceVue2['default'];
 	
@@ -267,7 +282,7 @@
 	    this._updateRef();
 	
 	    // initialize data as empty object.
-	    // it will be filled up in _initScope().
+	    // it will be filled up in _initData().
 	    this._data = {};
 	
 	    // call init hook
@@ -577,6 +592,8 @@
 	 * @return {Function}
 	 */
 	
+	// QA 为什么说比原生的bind方法快？
+	
 	function bind(fn, ctx) {
 	  return function (a) {
 	    var l = arguments.length;
@@ -713,6 +730,8 @@
 	 * @param {Array} arr
 	 * @param {*} obj
 	 */
+	
+	// QA 为什么比native快
 	
 	function indexOf(arr, obj) {
 	  var i = arr.length;
@@ -2189,7 +2208,7 @@
 	 */
 	
 	function mergeAssets(parentVal, childVal) {
-	  var res = Object.create(parentVal);
+	  var res = Object.create(parentVal || null);
 	  return childVal ? _lang.extend(res, guardArrayAssets(childVal)) : res;
 	}
 	
@@ -2356,7 +2375,7 @@
 	  var options = {};
 	  var key;
 	  if (child['extends']) {
-	    parent = mergeOptions(parent, child['extends'], vm);
+	    parent = typeof child['extends'] === 'function' ? mergeOptions(parent, child['extends'].options, vm) : mergeOptions(parent, child['extends'], vm);
 	  }
 	  if (child.mixins) {
 	    for (var i = 0, l = child.mixins.length; i < l; i++) {
@@ -2559,6 +2578,8 @@
 	  _utilIndex.def(value, '__ob__', this);
 	  if (_utilIndex.isArray(value)) {
 	    var augment = _utilIndex.hasProto ? protoAugment : copyAugment;
+	    // replace original array methods with those are intercepted
+	    // from ./array.js
 	    augment(value, _array.arrayMethods, arrayKeys);
 	    this.observeArray(value);
 	  } else {
@@ -2678,6 +2699,7 @@
 	    return;
 	  }
 	  var ob;
+	  // if observer exist
 	  if (_utilIndex.hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
 	    ob = value.__ob__;
 	  } else if (shouldConvert && (_utilIndex.isArray(value) || _utilIndex.isPlainObject(value)) && Object.isExtensible(value) && !value._isVue) {
@@ -2698,6 +2720,7 @@
 	 */
 	
 	function defineReactive(obj, key, val) {
+	  // QA what job does this dep have?
 	  var dep = new _dep2['default']();
 	
 	  var property = Object.getOwnPropertyDescriptor(obj, key);
@@ -2714,6 +2737,7 @@
 	    enumerable: true,
 	    configurable: true,
 	    get: function reactiveGetter() {
+	      debugger;
 	      var value = getter ? getter.call(obj) : val;
 	      if (_dep2['default'].target) {
 	        dep.depend();
@@ -2730,6 +2754,7 @@
 	      return value;
 	    },
 	    set: function reactiveSetter(newVal) {
+	      debugger;
 	      var value = getter ? getter.call(obj) : val;
 	      if (newVal === value) {
 	        return;
@@ -3211,6 +3236,7 @@
 	 */
 	
 	function Watcher(vm, expOrFn, cb, options) {
+	  debugger;
 	  // mix in options
 	  if (options) {
 	    _utilIndex.extend(this, options);
@@ -3484,15 +3510,13 @@
 	var seenObjects = new _utilIndex._Set();
 	function traverse(val, seen) {
 	  var i = undefined,
-	      keys = undefined,
-	      isA = undefined,
-	      isO = undefined;
+	      keys = undefined;
 	  if (!seen) {
 	    seen = seenObjects;
 	    seen.clear();
 	  }
-	  isA = _utilIndex.isArray(val);
-	  isO = _utilIndex.isObject(val);
+	  var isA = _utilIndex.isArray(val);
+	  var isO = _utilIndex.isObject(val);
 	  if (isA || isO) {
 	    if (val.__ob__) {
 	      var depId = val.__ob__.dep.id;
@@ -4091,24 +4115,22 @@
 	// triggered, the DOM would have already been in updated
 	// state.
 	
-	var queueIndex;
 	var queue = [];
 	var userQueue = [];
 	var has = {};
 	var circular = {};
 	var waiting = false;
-	var internalQueueDepleted = false;
 	
 	/**
 	 * Reset the batcher's state.
 	 */
 	
 	function resetBatcherState() {
-	  queue = [];
-	  userQueue = [];
+	  queue.length = 0;
+	  userQueue.length = 0;
 	  has = {};
 	  circular = {};
-	  waiting = internalQueueDepleted = false;
+	  waiting = false;
 	}
 	
 	/**
@@ -4117,8 +4139,12 @@
 	
 	function flushBatcherQueue() {
 	  runBatcherQueue(queue);
-	  internalQueueDepleted = true;
+	  queue.length = 0;
 	  runBatcherQueue(userQueue);
+	  // user watchers triggered more internal watchers
+	  if (queue.length) {
+	    runBatcherQueue(queue);
+	  }
 	  // dev tool hook
 	  /* istanbul ignore if */
 	  if (_utilIndex.devtools && _config2['default'].devtools) {
@@ -4136,8 +4162,8 @@
 	function runBatcherQueue(queue) {
 	  // do not cache length because more watchers might be pushed
 	  // as we run existing watchers
-	  for (queueIndex = 0; queueIndex < queue.length; queueIndex++) {
-	    var watcher = queue[queueIndex];
+	  for (var i = 0; i < queue.length; i++) {
+	    var watcher = queue[i];
 	    var id = watcher.id;
 	    has[id] = null;
 	    watcher.run();
@@ -4166,20 +4192,14 @@
 	function pushWatcher(watcher) {
 	  var id = watcher.id;
 	  if (has[id] == null) {
-	    if (internalQueueDepleted && !watcher.user) {
-	      // an internal watcher triggered by a user watcher...
-	      // let's run it immediately after current user watcher is done.
-	      userQueue.splice(queueIndex + 1, 0, watcher);
-	    } else {
-	      // push watcher into appropriate queue
-	      var q = watcher.user ? userQueue : queue;
-	      has[id] = q.length;
-	      q.push(watcher);
-	      // queue the flush
-	      if (!waiting) {
-	        waiting = true;
-	        _utilIndex.nextTick(flushBatcherQueue);
-	      }
+	    // push watcher into appropriate queue
+	    var q = watcher.user ? userQueue : queue;
+	    has[id] = q.length;
+	    q.push(watcher);
+	    // queue the flush
+	    if (!waiting) {
+	      waiting = true;
+	      _utilIndex.nextTick(flushBatcherQueue);
 	    }
 	  }
 	}
@@ -4271,7 +4291,7 @@
 	  // link function for the node itself.
 	  var nodeLinkFn = partial || !options._asComponent ? compileNode(el, options) : null;
 	  // link function for the childNodes
-	  var childLinkFn = !(nodeLinkFn && nodeLinkFn.terminal) && el.tagName !== 'SCRIPT' && el.hasChildNodes() ? compileNodeList(el.childNodes, options) : null;
+	  var childLinkFn = !(nodeLinkFn && nodeLinkFn.terminal) && !isScript(el) && el.hasChildNodes() ? compileNodeList(el.childNodes, options) : null;
 	
 	  /**
 	   * A composite linker function to be called on a already
@@ -4491,7 +4511,7 @@
 	
 	function compileNode(node, options) {
 	  var type = node.nodeType;
-	  if (type === 1 && node.tagName !== 'SCRIPT') {
+	  if (type === 1 && !isScript(node)) {
 	    return compileElement(node, options);
 	  } else if (type === 3 && node.data.trim()) {
 	    return compileTextNode(node, options);
@@ -5013,6 +5033,10 @@
 	    if (tokens[i].oneTime) return true;
 	  }
 	}
+	
+	function isScript(el) {
+	  return el.tagName === 'SCRIPT' && (!el.hasAttribute('type') || el.getAttribute('type') === 'text/javascript');
+	}
 
 /***/ },
 /* 26 */
@@ -5282,10 +5306,13 @@
 	
 	function nodeToFragment(node) {
 	  // if its a template tag and the browser supports it,
-	  // its content is already a document fragment.
+	  // its content is already a document fragment. However, iOS Safari has
+	  // bug when using directly cloned template content with touch
+	  // events and can cause crashes when the nodes are removed from DOM, so we
+	  // have to treat template elements as string templates. (#2805)
+	  /* istanbul ignore if */
 	  if (isRealTemplate(node)) {
-	    _utilIndex.trimNode(node.content);
-	    return node.content;
+	    return stringToFragment(node.innerHTML);
 	  }
 	  // script template
 	  if (node.tagName === 'SCRIPT') {
@@ -5750,7 +5777,15 @@
 	      });
 	      setTimeout(op, staggerAmount);
 	    } else {
-	      frag.before(prevEl.nextSibling);
+	      var target = prevEl.nextSibling;
+	      /* istanbul ignore if */
+	      if (!target) {
+	        // reset end anchor position in case the position was messed up
+	        // by an external drag-n-drop library.
+	        _utilIndex.after(this.end, prevEl);
+	        target = this.end;
+	      }
+	      frag.before(target);
 	    }
 	  },
 	
@@ -5835,8 +5870,10 @@
 	        } else {
 	          ("development") !== 'production' && this.warnDuplicate(value);
 	        }
-	      } else {
+	      } else if (Object.isExtensible(value)) {
 	        _utilIndex.def(value, id, frag);
+	      } else if (true) {
+	        _utilIndex.warn('Frozen v-for objects cannot be automatically tracked, make sure to ' + 'provide a track-by key.');
 	      }
 	    }
 	    frag.raw = value;
@@ -9076,8 +9113,8 @@
 	    value = attrs[i].value;
 	    if (!to.hasAttribute(name) && !specialCharRE.test(name)) {
 	      to.setAttribute(name, value);
-	    } else if (name === 'class' && !_parsersText.parseText(value)) {
-	      value.trim().split(/\s+/).forEach(function (cls) {
+	    } else if (name === 'class' && !_parsersText.parseText(value) && (value = value.trim())) {
+	      value.split(/\s+/).forEach(function (cls) {
 	        _utilIndex.addClass(to, cls);
 	      });
 	    }
@@ -9129,6 +9166,10 @@
 	    contents[name] = extractFragment(contents[name], content);
 	  }
 	  if (content.hasChildNodes()) {
+	    var nodes = content.childNodes;
+	    if (nodes.length === 1 && nodes[0].nodeType === 3 && !nodes[0].data.trim()) {
+	      return;
+	    }
 	    contents['default'] = extractFragment(content.childNodes, content);
 	  }
 	}
@@ -9582,7 +9623,7 @@
 	    }
 	    // remove reference from data ob
 	    // frozen object may not have observer.
-	    if (this._data.__ob__) {
+	    if (this._data && this._data.__ob__) {
 	      this._data.__ob__.removeVm(this);
 	    }
 	    // Clean up references to private properties and other
@@ -9984,6 +10025,7 @@
 	    } else {
 	      factory = _utilIndex.resolveAsset(this.$options, 'components', value, true);
 	    }
+	    /* istanbul ignore if */
 	    if (!factory) {
 	      return;
 	    }
