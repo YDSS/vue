@@ -1,4 +1,5 @@
 dist/vue.js.map
+dist/practice/*.map
 dist/vue.min.js.gz
 test/unit/specs.js
 test/unit/specs.js.map

@@ -2737,7 +2737,6 @@
 	    enumerable: true,
 	    configurable: true,
 	    get: function reactiveGetter() {
-	      debugger;
 	      var value = getter ? getter.call(obj) : val;
 	      if (_dep2['default'].target) {
 	        dep.depend();
@@ -3236,7 +3235,6 @@
 	 */
 	
 	function Watcher(vm, expOrFn, cb, options) {
-	  debugger;
 	  // mix in options
 	  if (options) {
 	    _utilIndex.extend(this, options);

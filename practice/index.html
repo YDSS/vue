@@ -8,6 +8,9 @@
     <body>
         <div id="container">
             <p>{{text}}</p>
+            <div v-for="(index, item) in objArr">
+                <span>{{'name: ' + item.name}}</span>
+            </div>
         </div>
         <script src="../dist/practice.js" type="text/javascript" charset="utf-8"></script>
     </body>

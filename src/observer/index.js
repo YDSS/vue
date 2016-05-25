@@ -212,7 +212,6 @@ export function defineReactive (obj, key, val) {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
-        debugger
       var value = getter ? getter.call(obj) : val
       if (Dep.target) {
         dep.depend()
